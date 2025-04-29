@@ -1,0 +1,5 @@
+rootProject.name = 'xenoblade-chronicles-checklist-backend'
+
+include 'user-auth'
+include 'xc3'
+include 'api-gateway'
