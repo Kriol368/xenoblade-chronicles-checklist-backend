@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # MySQL container (XAMPP-style)
   mysql:
     image: mysql:8.0
     container_name: xenoblade-mysql
@@ -9,8 +8,9 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: auth_db
     volumes:
-      - ./docker/mysql/init:/docker-entrypoint-initdb.d  # DB creation only
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -18,38 +18,52 @@ services:
       timeout: 3s
       retries: 5
 
-  # Spring Boot services
   user-auth:
-    build: ./user-auth
+    build:
+      context: .
+      dockerfile: user-auth/Dockerfile
+    container_name: user-auth
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/auth_db?useSSL=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/auth_db?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: rootpass
+      SERVER_PORT: 8080
     depends_on:
       mysql:
         condition: service_healthy
 
   xc3:
-    build: ./xc3
+    build:
+      context: .
+      dockerfile: xc3/Dockerfile
+    container_name: xc3
     ports:
-      - "8081:8081"
+      - "8082:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/xc3_db?useSSL=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/xc3_db?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: rootpass
+      SERVER_PORT: 8080
     depends_on:
       mysql:
         condition: service_healthy
 
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: api-gateway
     ports:
       - "80:8080"
+    environment:
+      SERVER_PORT: 8080
+      USER_AUTH_SERVICE_URL: http://user-auth:8080
+      XC3_SERVICE_URL: http://xc3:8080
     depends_on:
       - user-auth
       - xc3
 
 volumes:
-  mysql_data:  # Persistent DB storage
+  mysql_data:
