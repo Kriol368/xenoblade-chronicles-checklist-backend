@@ -23,8 +23,6 @@ services:
       context: .
       dockerfile: user-auth/Dockerfile
     container_name: user-auth
-    ports:
-      - "8081:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/auth_db?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
@@ -39,8 +37,6 @@ services:
       context: .
       dockerfile: xc3/Dockerfile
     container_name: xc3
-    ports:
-      - "8082:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/xc3_db?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
@@ -56,7 +52,7 @@ services:
       dockerfile: api-gateway/Dockerfile
     container_name: api-gateway
     ports:
-      - "80:8080"
+      - "8080:8080"
     environment:
       SERVER_PORT: 8080
       USER_AUTH_SERVICE_URL: http://user-auth:8080
