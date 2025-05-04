@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gradle"
+    directory: "/api-gateway"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gradle"
+    directory: "/user-auth"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gradle"
+    directory: "/xc3"
+    schedule:
+      interval: "weekly"
