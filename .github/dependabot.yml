@@ -3,16 +3,16 @@ updates:
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
   - package-ecosystem: "gradle"
     directory: "/api-gateway"
     schedule:
-      interval: "weekly"
+      interval: "daily"
   - package-ecosystem: "gradle"
     directory: "/user-auth"
     schedule:
-      interval: "weekly"
+      interval: "daily"
   - package-ecosystem: "gradle"
     directory: "/xc3"
     schedule:
-      interval: "weekly"
+      interval: "daily"
