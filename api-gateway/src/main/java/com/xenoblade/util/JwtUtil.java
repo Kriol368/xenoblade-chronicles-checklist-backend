@@ -79,7 +79,7 @@ public class JwtUtil {
                 throw e;
             }
         } catch (Exception e) {
-            throw new RuntimeException("Token invalido", e);
+            throw new RuntimeException("Invalid token", e);
         }
     }
 }
