@@ -3,6 +3,7 @@ package com.xenoblade.domain.service;
 import io.jsonwebtoken.Jwts;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.util.Map;
@@ -30,15 +31,16 @@ public class JwtKeyRotationService {
         return previousKeyId != null ? keys.get(previousKeyId) : null;
     }
 
-    @Scheduled(fixedRate = 604800000) // 7 días
-    public void rotateKey() {
-        String newKeyId = "key-" + System.currentTimeMillis();
-        SecretKey newKey = Jwts.SIG.HS256.key().build();
-        previousKeyId = currentKeyId;
-        currentKeyId = newKeyId;
+    @Scheduled(fixedRate = 604800000) // 7 days
+    public Mono<Void> rotateKey() {
+        return Mono.fromRunnable(() -> {
+            String newKeyId = "key-" + System.currentTimeMillis();
+            SecretKey newKey = Jwts.SIG.HS256.key().build();
+            previousKeyId = currentKeyId;
+            currentKeyId = newKeyId;
 
-        keys.put(currentKeyId, newKey);
-
-        keys.keySet().removeIf(keyId -> !keyId.equals(currentKeyId) && !keyId.equals(previousKeyId));
+            keys.put(currentKeyId, newKey);
+            keys.keySet().removeIf(keyId -> !keyId.equals(currentKeyId) && !keyId.equals(previousKeyId));
+        });
     }
 }

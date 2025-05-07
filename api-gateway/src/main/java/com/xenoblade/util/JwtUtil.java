@@ -4,6 +4,7 @@ import com.xenoblade.domain.service.JwtKeyRotationService;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -18,31 +19,35 @@ public class JwtUtil {
         this.keyService = keyService;
     }
 
-    public String generateToken(String username) {
-        return Jwts.builder()
-                .header().add("kid", keyService.getCurrentKeyId()).and()
-                .subject(username)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(keyService.getCurrentKey())
-                .compact();
+    public Mono<String> generateToken(String username) {
+        return Mono.fromCallable(() ->
+                Jwts.builder()
+                        .header().add("kid", keyService.getCurrentKeyId()).and()
+                        .subject(username)
+                        .issuedAt(new Date())
+                        .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                        .signWith(keyService.getCurrentKey())
+                        .compact()
+        );
     }
 
-    public boolean validateToken(String token) {
-        try {
-            if (tryValidateWithKey(token, keyService.getCurrentKey())) {
-                return true;
-            }
+    public Mono<Boolean> validateToken(String token) {
+        return Mono.fromCallable(() -> {
+            try {
+                if (tryValidateWithKey(token, keyService.getCurrentKey())) {
+                    return true;
+                }
 
-            SecretKey previousKey = keyService.getPreviousKey();
-            if (previousKey != null) {
-                return tryValidateWithKey(token, previousKey);
-            }
+                SecretKey previousKey = keyService.getPreviousKey();
+                if (previousKey != null) {
+                    return tryValidateWithKey(token, previousKey);
+                }
 
-            return false;
-        } catch (Exception e) {
-            return false;
-        }
+                return false;
+            } catch (Exception e) {
+                return false;
+            }
+        });
     }
 
     private boolean tryValidateWithKey(String token, SecretKey key) {
@@ -57,29 +62,31 @@ public class JwtUtil {
         }
     }
 
-    public String extractUsername(String token) {
-        try {
+    public Mono<String> extractUsername(String token) {
+        return Mono.fromCallable(() -> {
             try {
-                return Jwts.parser()
-                        .verifyWith(keyService.getCurrentKey())
-                        .build()
-                        .parseSignedClaims(token)
-                        .getPayload()
-                        .getSubject();
-            } catch (Exception e) {
-                SecretKey previousKey = keyService.getPreviousKey();
-                if (previousKey != null) {
+                try {
                     return Jwts.parser()
-                            .verifyWith(previousKey)
+                            .verifyWith(keyService.getCurrentKey())
                             .build()
                             .parseSignedClaims(token)
                             .getPayload()
                             .getSubject();
+                } catch (Exception e) {
+                    SecretKey previousKey = keyService.getPreviousKey();
+                    if (previousKey != null) {
+                        return Jwts.parser()
+                                .verifyWith(previousKey)
+                                .build()
+                                .parseSignedClaims(token)
+                                .getPayload()
+                                .getSubject();
+                    }
+                    throw e;
                 }
-                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException("Invalid token", e);
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid token", e);
-        }
+        });
     }
 }
