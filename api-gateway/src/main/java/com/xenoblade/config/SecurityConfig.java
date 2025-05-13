@@ -30,7 +30,8 @@ public class SecurityConfig {
                 .cors(ServerHttpSecurity.CorsSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(
-                                "/auth/test",
+                                "/auth/login",
+                                "/auth/register",
                                 "/test"
                         ).permitAll()
                         .anyExchange().authenticated()
